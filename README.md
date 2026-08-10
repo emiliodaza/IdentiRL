@@ -63,7 +63,7 @@ reproducibility details are compiled into the
 [`six-page results paper`](output/pdf/identirl_results_paper.pdf). Its editable
 source is [`paper/identirl_results_paper.tex`](paper/identirl_results_paper.tex).
 
-### Viewing outside Codex
+### Viewing animations
 
 - The GIF above plays directly on the GitHub repository page. You can also
   download [`rl_episode.gif`](artifacts/five_seed/rl_episode.gif) and open it in
