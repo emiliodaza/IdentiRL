@@ -1,0 +1,415 @@
+\documentclass[9pt,twocolumn]{extarticle}
+
+\usepackage[letterpaper,margin=0.64in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+\setlength{\columnsep}{0.22in}
+\setlist{nosep,leftmargin=*}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{assumption}{Assumption}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\rtrue}{r^{\star}}
+\newcommand{\rproxy}{\widetilde r}
+\newcommand{\Dpre}{\mathcal{L}_{T}}
+\newcommand{\PiFull}{\Pi_{\mathrm{full}}}
+\newcommand{\PiHist}{\Pi_{\mathrm{hist}}}
+\newcommand{\PiMem}{\Pi_{m}}
+
+\title{Diagnosing Reward Misspecification and Observation Insufficiency\\
+from Finite Prefixes of Reinforcement-Learning Training}
+\author{%
+Emilio Daza$^{1}$ \qquad Jacob Lee$^{2}$ \qquad Rohin Desai$^{3}$\\[0.45em]
+\small $^{1}$\textit{Dartmouth College}\\
+\small $^{2}$\textit{California Polytechnic State University}\\
+\small $^{3}$\textit{UC Berkeley}}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+\vspace{-1.2em}
+
+\begin{abstract}
+We ask when a finite prefix of ordinary reinforcement-learning (RL) training
+identifies whether poor intended performance is caused by optimizing a
+misspecified proxy reward or by lacking task-relevant observations. We define
+the two failures as separate value gaps, distinguish intrinsic missing
+information from limited agent memory, and formalize finite-prefix
+identifiability as a property of distributions over passive logs. A two-action
+construction proves that passive logs can be exactly observationally
+equivalent under the two failure mechanisms. We then define privileged-state
+and reward-audit probes and pose selection of a diagnostic intervention as a
+minimum-cost statistical decision problem. The specification yields explicit
+ground-truth labels and testable estimands for the accompanying experiments.
+\end{abstract}
+
+\section{Research question and scope}
+
+\textbf{Research question.} When are reward misspecification and task-relevant
+observation insufficiency statistically identifiable from a finite prefix of
+RL training, and, when passive logs are insufficient, what minimum-cost
+diagnostic intervention makes them identifiable?
+
+Reward misspecification can allow greater proxy return while reducing intended
+return \cite{pan2022effects}. Partial observability creates a different
+difficulty: an agent must act without full knowledge of the controlled latent
+state, and tractability requires structural conditions on how observations
+reveal that state \cite{liu2022pomdp}. Early interactions are worth studying
+because they can exert a lasting influence on deep-RL learning
+\cite{nikishin2022primacy}. Our object is not merely prediction of eventual
+failure, but identification of its causal class from early data.
+
+\section{Formal setting}
+
+Let a finite-horizon POMDP with two objectives be
+\begin{equation}
+\mathcal M=(\mathcal S,\mathcal A,\mathcal O,P,Z,\mu_0,H,
+\gamma,\rproxy,\rtrue).
+\end{equation}
+Here $S_0\sim\mu_0$, $O_t\sim Z(\cdot\mid S_t)$,
+$S_{t+1}\sim P(\cdot\mid S_t,A_t)$, $\rproxy:\mathcal
+S\times\mathcal A\to[0,1]$ is the reward supplied during ordinary training,
+and $\rtrue:\mathcal S\times\mathcal A\to[0,1]$ is the designer's intended
+evaluation objective. The analysis also permits stochastic rewards by
+interpreting these functions as conditional means. For objective $r$ and
+policy $\pi$, define
+\begin{equation}
+V_r(\pi)=\E_{\mathcal M,\pi}\!\left[\sum_{t=0}^{H-1}
+\gamma^t r(S_t,A_t)\right].
+\end{equation}
+
+Three policy classes isolate information from computation:
+\begin{align*}
+\PiFull &: \text{policies that observe the current latent state }S_t,\\
+\PiHist &: \text{policies with perfect recall of the observable history},\\
+\PiMem &: \text{policies restricted to a specified memory budget }m.
+\end{align*}
+The observable history before action $t$ is
+$H_t^o=(O_0,A_0,\widetilde R_0,\ldots,O_t)$; thus $\PiHist$ may use all
+information actually available to an ideal agent, whereas $\PiMem\subseteq
+\PiHist$ represents the architecture being trained (for example, a reactive
+policy or a fixed recurrent state).
+
+For a learning algorithm $\mathsf A$, seed $U$, and $T$ training transitions,
+the \emph{passive early-training prefix} is
+\begin{equation}
+\Dpre=(O_t,A_t,\widetilde R_t,p_t,V_t,\delta_t,d_t)_{t<T},U,
+\end{equation}
+where $p_t$ is the logged action distribution, $V_t$ a value estimate,
+$\delta_t$ a TD error, and $d_t$ an episode boundary indicator. Latent states
+$S_t$ and intended rewards $R_t^\star$ are deliberately excluded. Quantities
+such as entropy or action diversity are measurable functions of $\Dpre$ and
+therefore add no information in the statistical sense, although they may make
+classification easier for a finite-capacity diagnostic model.
+
+\section{Failure definitions}
+
+For a policy class $\Pi$, let
+$J_r(\Pi)=\sup_{\pi\in\Pi}V_r(\pi)$ and
+$\Gamma_{\widetilde r}(\Pi)=\argmax_{\pi\in\Pi}V_{\widetilde r}(\pi)$.
+
+\begin{definition}[Reward misspecification gap]
+Holding the information interface fixed at $\PiHist$, define
+\begin{equation}
+\Delta_{\mathrm R}=
+J_{\rtrue}(\PiHist)-
+\sup_{\pi\in\Gamma_{\widetilde r}(\PiHist)}V_{\rtrue}(\pi).
+\label{eq:reward-gap}
+\end{equation}
+Thus $\Delta_{\mathrm R}>0$ means that even the intended-best proxy-optimal
+policy is suboptimal for the intended objective. For an actual learned policy
+$\widehat\pi_T$, the empirical, algorithm-dependent regret is
+$\widehat\Delta_{\mathrm R,T}=J_{\rtrue}(\PiHist)-
+V_{\rtrue}(\widehat\pi_T)$ after controlling for the observation gap below.
+\end{definition}
+
+This definition is behavioral: $\rproxy\neq\rtrue$ alone is insufficient,
+because two rewards may induce the same optimal policies. It also avoids
+labeling an arbitrary unfavorable tie as structurally unavoidable.
+
+\begin{definition}[Intrinsic observation gap]
+\begin{equation}
+\Delta_{\mathrm O}=J_{\rtrue}(\PiFull)-J_{\rtrue}(\PiHist).
+\label{eq:observation-gap}
+\end{equation}
+If $\Delta_{\mathrm O}>0$, even an ideal policy with unlimited recall of the
+available history cannot match a state-informed policy; task-relevant
+information is intrinsically absent from the observation process.
+\end{definition}
+
+\begin{definition}[Memory/architecture gap]
+\begin{equation}
+\Delta_{\mathrm M}^{(m)}=J_{\rtrue}(\PiHist)-J_{\rtrue}(\PiMem).
+\label{eq:memory-gap}
+\end{equation}
+A positive $\Delta_{\mathrm M}^{(m)}$ is not, by itself, observation
+insufficiency: the required information exists in the observable history but
+the chosen agent cannot retain or use it. This gap can be estimated by
+comparing a history-aware oracle (or sufficiently expressive recurrent policy)
+with the trained architecture.
+\end{definition}
+
+Given margins $\varepsilon_R,\varepsilon_O>0$, assign the population label
+\begin{equation}
+Y(\mathcal M)=
+\big(\ind\{\Delta_{\mathrm R}>\varepsilon_R\},
+     \ind\{\Delta_{\mathrm O}>\varepsilon_O\}\big)
+\in\{0,1\}^2,
+\end{equation}
+corresponding to neither, reward-only, observation-only, and both. Margins
+prevent negligible numerical differences from defining a failure.
+
+\section{Finite-prefix identifiability}
+
+Let $\Theta$ be a prespecified family of environment--objective pairs and let
+$P_{\theta}^{T}$ denote the distribution of $\Dpre$ induced by
+$\theta\in\Theta$, the fixed learner, and the seed distribution.
+
+\begin{definition}[Passive identifiability at prefix length $T$]
+The label is passively identifiable on $\Theta$ if
+\begin{equation}
+P_\theta^T=P_{\theta'}^T\quad\Longrightarrow\quad
+Y(\theta)=Y(\theta')
+\qquad\forall\theta,\theta'\in\Theta.
+\label{eq:identifiability}
+\end{equation}
+Equivalently, every observational-equivalence class induced by the passive
+prefix is label-homogeneous.
+\end{definition}
+
+For two simple hypotheses with equal prior probability, the optimal diagnostic
+error after $n$ independent runs is
+\begin{equation}
+e_n^*=\frac{1-\TV\!\left((P_0^T)^{\otimes n},
+(P_1^T)^{\otimes n}\right)}{2}.
+\label{eq:lecam}
+\end{equation}
+Hence identical prefix distributions force chance-level binary diagnosis for
+every sample size. Merely adding deterministic summaries of the same logs
+cannot break this equivalence.
+
+\subsection{An explicit passive impossibility result}
+
+Fix $q\in(1/2,1)$ and consider independent one-step episodes with latent
+$S\in\{0,1\}$, $\Pp(S=0)=q$, actions $A\in\{0,1\}$, and the constant
+observation $O=o$. Define two systems:
+\begin{align*}
+\mathcal M_{\mathrm O}:\quad
+&\widetilde R=R^\star=\ind\{A=S\};\\
+\mathcal M_{\mathrm R}:\quad
+&R^\star=\ind\{A=1\},\\[-0.25em]
+&\widetilde R\mid A=a\sim
+\begin{cases}
+\mathrm{Bernoulli}(q),&a=0,\\
+\mathrm{Bernoulli}(1-q),&a=1,
+\end{cases}
+\end{align*}
+where $\widetilde R\perp S\mid A$ in $\mathcal M_{\mathrm R}$.
+
+\begin{proposition}[Passive non-identifiability]
+For any adaptive learner whose action at each episode is a measurable function
+of its seed and previous passive logs,
+\begin{equation}
+P_{\mathcal M_{\mathrm O}}^T=P_{\mathcal M_{\mathrm R}}^T
+\quad\text{for every finite }T.
+\end{equation}
+Nevertheless, $\mathcal M_{\mathrm O}$ is observation-limited but not
+reward-misspecified, while $\mathcal M_{\mathrm R}$ is reward-misspecified but
+not observation-limited.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+In $\mathcal M_{\mathrm O}$, marginalizing the unobserved state gives
+$\widetilde R\mid A=0\sim\mathrm{Bernoulli}(q)$ and
+$\widetilde R\mid A=1\sim\mathrm{Bernoulli}(1-q)$, exactly as in
+$\mathcal M_{\mathrm R}$. Because $O$ is constant, induction over episodes
+shows equality of the full passive-log distributions under any adaptive action
+rule. Logged policy probabilities, value estimates, and TD errors are produced
+by the same learner from the same seed and history, so their distributions are
+also equal.
+
+In $\mathcal M_{\mathrm O}$, proxy and intended rewards coincide, so
+$\Delta_{\mathrm R}=0$. A full-state policy chooses $A=S$ and obtains value
+$1$, while the best history policy always chooses $A=0$ and obtains $q$;
+therefore $\Delta_{\mathrm O}=1-q>0$. In $\mathcal M_{\mathrm R}$, the unique
+proxy-optimal action is $0$, whereas the intended-optimal action is $1$, so
+$\Delta_{\mathrm R}=1$. State access cannot improve the intended objective,
+which is independent of $S$, and thus $\Delta_{\mathrm O}=0$.
+\end{proof}
+
+The construction also rules out explanations based only on reward scale: the
+entire conditional distribution of the logged proxy reward is matched, not
+just its mean.
+
+\section{Diagnostic interventions}
+
+An intervention $d$ modifies only the diagnostic data-collection protocol,
+not the population label. We consider:
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{Passive ($d_0$):} collect additional ordinary episodes.
+\item \textbf{Privileged state ($d_S$):} reveal $S_t$ to a diagnostic probe for
+selected decisions, while leaving the training reward unchanged.
+\item \textbf{Reward audit ($d_R$):} query $R_t^\star$ on selected realized or
+counterfactual state--action pairs, or run short probes with corrected reward.
+\item \textbf{Combined ($d_{SR}$):} permit both forms of privileged access.
+\end{enumerate}
+
+The interventions target different causal contrasts. A state probe estimates
+the gain $J_{\rtrue}(\PiFull)-J_{\rtrue}(\PiHist)$; a reward audit estimates how
+the intended ranking of actions differs from the proxy ranking. In the toy
+pair, privileged state predicts proxy reward in $\mathcal M_{\mathrm O}$ but is
+irrelevant to proxy reward in $\mathcal M_{\mathrm R}$, whereas an audit finds
+$R^\star=\widetilde R$ in $\mathcal M_{\mathrm O}$ but not in
+$\mathcal M_{\mathrm R}$. Either targeted probe therefore breaks the passive
+equivalence statistically; using both is needed for unrestricted four-class
+diagnosis when the two failures may coexist.
+
+Let $N_d$ be probe episodes, $Q_S(d)$ privileged-state queries, and $Q_R(d)$
+intended-reward queries. For application-dependent nonnegative prices, define
+\begin{equation}
+C(d)=c_E N_d+c_S Q_S(d)+c_R Q_R(d).
+\label{eq:cost}
+\end{equation}
+Writing $P_\theta^{T,d}$ for all passive and interventional data, the
+minimum-cost $\delta$-reliable intervention is
+\begin{equation}
+C_\delta^*=\inf_{d,g}\left\{C(d):
+\sup_{\theta\in\Theta}
+\Pp_\theta\!\left[g(\Dpre,D_d)\neq Y(\theta)\right]\leq\delta
+\right\}.
+\label{eq:min-cost}
+\end{equation}
+Here $g$ ranges over diagnostic rules and $D_d$ is the probe data. A necessary
+pairwise condition is
+\begin{equation}
+\inf_{Y(\theta)\neq Y(\theta')}
+\TV(P_\theta^{T,d},P_{\theta'}^{T,d})\geq 1-2\delta.
+\end{equation}
+Thus the ``minimum'' intervention is not universally one query; it depends on
+the candidate family, noise level, confidence target, and relative cost of
+state and reward access.
+
+\section{Assumptions for positive identification}
+
+The impossibility result shows that identification requires restrictions or
+interventions. The initial experiments should state and test the following:
+\begin{enumerate}[label=\textbf{A\arabic*.}]
+\item \textbf{Known protocol.} The learner, logging map, prefix length, and seed
+distribution are fixed or observed; train and diagnostic trajectories do not
+silently change across conditions.
+\item \textbf{Exploration/overlap.} Every action needed to distinguish the
+hypotheses is selected with probability at least $\eta>0$ in relevant
+histories, or is deliberately selected by a probe.
+\item \textbf{Margin and stationarity.} Failure gaps exceed their declared
+thresholds, and transition, observation, and reward mechanisms remain stable
+during a run.
+\item \textbf{Faithful probes.} Privileged state reveals task-relevant state
+without changing dynamics; the reward audit is an unbiased measurement of the
+declared intended objective.
+\item \textbf{Structural separation.} Within the chosen environment family,
+every cross-label pair is separated by the selected passive or interventional
+data distribution. Without this assumption, no classifier can guarantee
+causal identification.
+\end{enumerate}
+
+Under A1--A5 and independent runs, standard consistent hypothesis tests recover
+the label as the number of runs grows. Finite-sample claims should be reported
+with uncertainty rather than inferred from a small set of point estimates;
+this is especially important in few-run RL evaluation
+\cite{agarwal2021precipice}.
+
+\section{Experimental estimands and handoff}
+
+The environment code should store $S_t$, $R_t^\star$, and $\widetilde R_t$
+separately, exposing only the latter in passive logs. The following oracle
+comparisons validate the ground-truth condition before training a diagnostic:
+\begin{center}
+\scriptsize
+\begin{tabularx}{\columnwidth}{@{}lXX@{}}
+\toprule
+Quantity & Population contrast & Interpretation\\
+\midrule
+$\Delta_{\mathrm R}$ & intended-best vs. proxy-optimal & incentive failure\\
+$\Delta_{\mathrm O}$ & full-state vs. full-history & missing information\\
+$\Delta_{\mathrm M}^{(m)}$ & full-history vs. memory-$m$ & agent limitation\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Use common random numbers or paired seeds across the four conditions where
+possible. Passive classifiers receive only $\Dpre$ at the first $5\%$, $10\%$,
+and $20\%$ of training; privileged labels never enter passive features. Report
+balanced accuracy, macro-F1, per-class recall, confusion matrices, and
+uncertainty intervals across seeds. The central empirical curve is diagnostic
+accuracy versus both prefix length $T$ and intervention cost $C(d)$. Five paired
+seeds are suitable for pipeline validation, but not by themselves for precise
+claims; final run counts should be chosen from pilot variance and accompanied
+by interval estimates.
+
+\section{Limitations and falsifiable claims}
+
+The labels depend on a declared intended reward; no statistical procedure can
+recover an unspecified human objective. Oracle policies may be approximated in
+larger environments, confounding optimization error with the value gaps.
+Moreover, diagnosis is relative to $\Theta$: unrestricted POMDP families admit
+observationally equivalent explanations. The project should therefore test
+three falsifiable claims: (i) passive accuracy remains near chance on matched
+equivalence pairs; (ii) the appropriate single probe separates each pure
+failure class; and (iii) combined probes achieve reliable four-class diagnosis
+at lower cost than indiscriminate privileged data collection.
+
+\section{Conclusion}
+
+Reward misspecification and observation insufficiency are distinct population
+properties, but they need not be distinguishable from ordinary early-training
+logs. The correct theoretical baseline is therefore conditional: identify the
+label only under explicit structural assumptions, and otherwise choose the
+least costly intervention that separates cross-label data distributions.
+
+\begin{thebibliography}{9}
+\small
+
+\bibitem{pan2022effects}
+A. Pan, K. Bhatia, and J. Steinhardt.
+\newblock The effects of reward misspecification: Mapping and mitigating
+misaligned models.
+\newblock In \emph{International Conference on Learning Representations},
+2022.
+
+\bibitem{liu2022pomdp}
+Q. Liu, A. Chung, C. Szepesv\'ari, and C. Jin.
+\newblock When is partially observable reinforcement learning not scary?
+\newblock In \emph{Proceedings of the 35th Conference on Learning Theory},
+PMLR 178:5175--5220, 2022.
+
+\bibitem{nikishin2022primacy}
+E. Nikishin, M. Schwarzer, P. D'Oro, P.-L. Bacon, and A. Courville.
+\newblock The primacy bias in deep reinforcement learning.
+\newblock In \emph{Proceedings of the 39th International Conference on Machine
+Learning}, PMLR 162:16828--16847, 2022.
+
+\bibitem{agarwal2021precipice}
+R. Agarwal, M. Schwarzer, P. S. Castro, A. C. Courville, and M. G. Bellemare.
+\newblock Deep reinforcement learning at the edge of the statistical
+precipice.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+volume 34, 2021.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,13 @@
+learner,benchmark,prefix_fraction,target_accuracy,status,protocol,probe_count,minimum_cost,balanced_accuracy,ci_lower_bound
+ppo,factorial,0.05,0.9,identified,state,4,20.0,1.0,1.0
+ppo,factorial,0.1,0.9,identified,state,4,20.0,1.0,1.0
+ppo,factorial,0.2,0.9,identified,reward,4,20.0,1.0,1.0
+ppo,matched,0.05,0.9,identified,reward,8,40.0,1.0,1.0
+ppo,matched,0.1,0.9,identified,combined,4,36.0,1.0,1.0
+ppo,matched,0.2,0.9,identified,reward,8,40.0,1.0,1.0
+tabular,factorial,0.05,0.9,identified,state,4,20.0,1.0,1.0
+tabular,factorial,0.1,0.9,not_reached,,,,,
+tabular,factorial,0.2,0.9,identified,state,4,20.0,1.0,1.0
+tabular,matched,0.05,0.9,identified,combined,8,72.0,1.0,1.0
+tabular,matched,0.1,0.9,identified,reward,8,40.0,1.0,1.0
+tabular,matched,0.2,0.9,identified,combined,8,72.0,1.0,1.0

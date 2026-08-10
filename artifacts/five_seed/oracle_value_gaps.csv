@@ -1,0 +1,7 @@
+benchmark,label,reward_gap,observation_gap,memory_gap,proxy_reward_min,proxy_reward_max
+factorial,neither,0.0,0.0,0.0,0.0,1.0
+factorial,reward,5.0,0.0,0.0,0.0,1.0
+factorial,observation,0.0,1.25,0.0,0.0,1.0
+factorial,both,2.5,1.25,0.0,0.0,1.0
+matched,observation,0.0,1.25,0.0,0.0,1.0
+matched,reward,5.0,0.0,0.0,0.0,1.0

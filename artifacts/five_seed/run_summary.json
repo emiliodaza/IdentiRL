@@ -1,0 +1,51 @@
+{
+  "learners": [
+    "tabular",
+    "ppo"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "total_steps_per_run": 1000,
+  "factorial_runs": 40,
+  "matched_control_runs": 20,
+  "passive_rows": 60000,
+  "probe_counts": [
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "artifacts": [
+    "accuracy_cost_factorial_ppo.png",
+    "accuracy_cost_factorial_tabular.png",
+    "accuracy_cost_matched_ppo.png",
+    "accuracy_cost_matched_tabular.png",
+    "accuracy_prefix_factorial_ppo.png",
+    "accuracy_prefix_factorial_tabular.png",
+    "accuracy_prefix_matched_ppo.png",
+    "accuracy_prefix_matched_tabular.png",
+    "confusion_factorial_ppo.png",
+    "confusion_factorial_tabular.png",
+    "confusion_matched_ppo.png",
+    "confusion_matched_tabular.png",
+    "diagnostic_metrics.csv",
+    "diagnostic_metrics.json",
+    "findings.md",
+    "matched_equivalence_check.csv",
+    "minimum_cost_interventions.csv",
+    "oracle_value_gaps.csv",
+    "passive_training.csv",
+    "privileged_evaluation.csv",
+    "probe_combined.csv",
+    "probe_reward.csv",
+    "probe_state.csv",
+    "run_manifest.csv",
+    "run_summary.json"
+  ]
+}
