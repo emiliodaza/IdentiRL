@@ -45,6 +45,8 @@
     "probe_combined.csv",
     "probe_reward.csv",
     "probe_state.csv",
+    "rl_episode.gif",
+    "rl_episode_snapshot.png",
     "run_manifest.csv",
     "run_summary.json"
   ]

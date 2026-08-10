@@ -9,7 +9,6 @@ from pathlib import Path
 from gymnasium.utils.env_checker import check_env
 
 from .envs import Condition, DiagnosticPOMDP, PassiveAmbiguityEnv
-from .experiment import run_experiments
 from .theory import factorial_value_gaps, matched_value_gaps, validate_factorial_labels
 
 
@@ -48,6 +47,16 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--probe-counts", nargs="+", type=int, default=[4, 8, 16, 32, 64])
     run.add_argument("--horizon", type=int, default=5)
     run.add_argument("--state-zero-probability", type=float, default=0.75)
+    animate = subparsers.add_parser("animate", help="render a 2D playback of a trained run")
+    animate.add_argument("--artifacts", type=Path, default=Path("artifacts/five_seed"))
+    animate.add_argument("--output", type=Path, default=Path("artifacts/five_seed/rl_episode.gif"))
+    animate.add_argument("--snapshot-output", type=Path)
+    animate.add_argument("--learner", choices=("tabular", "ppo"), default="ppo")
+    animate.add_argument("--benchmark", choices=("factorial", "matched"), default="factorial")
+    animate.add_argument("--label", default="both")
+    animate.add_argument("--seed", type=int, default=0)
+    animate.add_argument("--steps", type=int, default=80)
+    animate.add_argument("--fps", type=int, default=5)
     return parser
 
 
@@ -55,7 +64,9 @@ def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     if args.command == "validate":
         result = validate()
-    else:
+    elif args.command == "run":
+        from .experiment import run_experiments
+
         result = run_experiments(
             args.output,
             learners=args.learners,
@@ -65,6 +76,21 @@ def main(argv: list[str] | None = None) -> None:
             horizon=args.horizon,
             state_zero_probability=args.state_zero_probability,
         )
+    else:
+        from .visualization import create_animation
+
+        path = create_animation(
+            args.artifacts,
+            args.output,
+            learner=args.learner,
+            benchmark=args.benchmark,
+            label=args.label,
+            seed=args.seed,
+            steps=args.steps,
+            fps=args.fps,
+            snapshot_path=args.snapshot_output,
+        )
+        result = {"animation": str(path), "snapshot": str(args.snapshot_output) if args.snapshot_output else None}
     print(json.dumps(result, indent=2))
 
 

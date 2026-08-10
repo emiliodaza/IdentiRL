@@ -44,6 +44,25 @@ both mechanisms in the matched control, using both learners:
 .venv/bin/python -m identirl run --output artifacts/five_seed
 ```
 
+Create a 2D playback that contrasts what the agent observes with the latent
+state and intended objective available only to the evaluator:
+
+```bash
+.venv/bin/python -m identirl animate \
+  --artifacts artifacts/five_seed \
+  --learner ppo --benchmark factorial --label both --seed 0 \
+  --output artifacts/five_seed/rl_episode.gif \
+  --snapshot-output artifacts/five_seed/rl_episode_snapshot.png
+```
+
+![Animated IdentiRL episode](artifacts/five_seed/rl_episode.gif)
+
+The theory, full experimental protocol, value-gap validation, five-seed
+results, accuracy/cost curves, confusion matrices, limitations, and
+reproducibility details are compiled into the
+[`six-page results paper`](output/pdf/identirl_results_paper.pdf). Its editable
+source is [`paper/identirl_results_paper.tex`](paper/identirl_results_paper.tex).
+
 For a quick smoke test:
 
 ```bash
