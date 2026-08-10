@@ -63,6 +63,22 @@ reproducibility details are compiled into the
 [`six-page results paper`](output/pdf/identirl_results_paper.pdf). Its editable
 source is [`paper/identirl_results_paper.tex`](paper/identirl_results_paper.tex).
 
+### Viewing outside Codex
+
+- The GIF above plays directly on the GitHub repository page. You can also
+  download [`rl_episode.gif`](artifacts/five_seed/rl_episode.gif) and open it in
+  Preview, a browser, or a presentation.
+- Download [`identirl-rl-explorer.html`](artifacts/five_seed/identirl-rl-explorer.html)
+  and double-click it to use the condition selector, learner selector, playback
+  button, and timeline in any modern browser. It is self-contained and does not
+  require Python or an internet connection.
+- From a local clone on macOS, open both with:
+
+```bash
+open artifacts/five_seed/rl_episode.gif
+open artifacts/five_seed/identirl-rl-explorer.html
+```
+
 For a quick smoke test:
 
 ```bash

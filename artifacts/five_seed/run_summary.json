@@ -37,6 +37,7 @@
     "diagnostic_metrics.csv",
     "diagnostic_metrics.json",
     "findings.md",
+    "identirl-rl-explorer.html",
     "matched_equivalence_check.csv",
     "minimum_cost_interventions.csv",
     "oracle_value_gaps.csv",
